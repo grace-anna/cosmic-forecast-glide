@@ -1,10 +1,51 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Search, Navigation } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 export const LocationSelector = () => {
   const [location, setLocation] = useState("");
+  const [coordinates, setCoordinates] = useState({ lat: 0, lon: 0 });
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+
+    // You'll need to add your Mapbox token here
+    // For now, using a placeholder - users should add their own token
+    mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZS1kZW1vIiwiYSI6ImNtNTBxeWQ2YTA5aWsycXM5eDRhMGJ4eGcifQ.example';
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: [-98.5795, 39.8283], // Center of US
+      zoom: 3,
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add click handler to drop pin
+    map.current.on('click', (e) => {
+      const { lng, lat } = e.lngLat;
+      setCoordinates({ lat, lon: lng });
+      
+      if (marker.current) {
+        marker.current.remove();
+      }
+      
+      marker.current = new mapboxgl.Marker({ color: '#00d4ff' })
+        .setLngLat([lng, lat])
+        .addTo(map.current!);
+    });
+
+    return () => {
+      map.current?.remove();
+    };
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -86,27 +127,17 @@ export const LocationSelector = () => {
             <MapPin className="h-5 w-5 text-magenta-hot" />
             Map Preview
           </h3>
-          <div className="aspect-square rounded-lg bg-secondary/50 border border-white/10 flex items-center justify-center relative overflow-hidden">
-            {/* Placeholder for map */}
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-glow/10 to-magenta-hot/10" />
-            <div className="relative z-10 text-center space-y-3">
-              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-cyan-glow to-purple-deep flex items-center justify-center animate-pulse-glow">
-                <MapPin className="h-10 w-10 text-white" />
-              </div>
-              <p className="text-muted-foreground">Interactive map will appear here</p>
-              <p className="text-xs text-muted-foreground/60">Click to drop a pin or search for a location</p>
-            </div>
-          </div>
+          <div ref={mapContainer} className="aspect-square rounded-lg overflow-hidden border border-white/10" />
           
           {/* Location Details */}
           <div className="grid grid-cols-2 gap-4 pt-4">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground">Latitude</p>
-              <p className="font-mono text-sm">--.----- °N</p>
+              <p className="font-mono text-sm">{coordinates.lat.toFixed(4)}°</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground">Longitude</p>
-              <p className="font-mono text-sm">---.----- °W</p>
+              <p className="font-mono text-sm">{coordinates.lon.toFixed(4)}°</p>
             </div>
           </div>
         </div>
