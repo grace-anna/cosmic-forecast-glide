@@ -32,9 +32,26 @@ export const LocationSelector = () => {
                 placeholder="Enter city, coordinates, or place name..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="pl-10 bg-background/50 border-white/20 focus:border-cyan-glow"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && location.trim()) {
+                    console.log('Searching for:', location);
+                  }
+                }}
+                className="pl-10 pr-10 bg-background/50 border-white/20 focus:border-cyan-glow"
               />
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Button
+                size="icon"
+                onClick={() => {
+                  if (location.trim()) {
+                    console.log('Searching for:', location);
+                  }
+                }}
+                disabled={!location.trim()}
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
             </div>
 
             <Button
